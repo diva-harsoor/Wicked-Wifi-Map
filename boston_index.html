@@ -1,0 +1,240 @@
+<!doctype html>
+
+<html>
+
+<head>
+	<meta charset='utf-8'/>
+	<script src="http://d3js.org/d3.v4.min.js"></script>
+	<title>CSC630</title>
+	<style>
+		body {
+			font-family: Palatino;
+			text-align: center;
+		}
+
+		#left-div {
+			float:left;
+		}
+
+		#right-div {
+			float:right;
+			width:500px;
+			height:600px;
+		}
+
+		#containing {
+			overflow: scroll;
+			width: 1000px;
+		}
+
+		path {
+			stroke: rgb(44, 62, 80);
+		}
+	</style>
+</head>
+
+<body>
+	<h1>Does Wicked Free Wi-Fi Effectively Serve Low Income Areas?</h1>
+	<p>One goal of Boston's public wi-fi service, Wicked Free Wi-Fi, is to help tourists and Bostonians find places to shop and eat in the city. Another goal, the one we want to explore here, is to provide underserved Bostonians with digital access. In order to test the effectiveness of the service, we will be looking at two data maps of Boston. On the left is a map of the connections per neighborhood to  Wicked Free Wi-Fi from May 2014 to May 2015. Mouseover areas on the map to see their names and the number of connections. On the right is an an income map of the City of Boston with gold denoting the areas where the average income is higher than the median and blue denoting the areas where it is lower.</p>
+
+	<div id='containing'>
+
+		<div id='left-div'>
+			
+	        <p></p>
+		</div>
+		<div id='right-div'>
+			<img src="https://c.o0bg.com/rf/image_960w/Boston/2011-2020/2015/07/13/BostonGlobe.com/Business/Images/gold-big.jpg", width="600px", height="600px">
+		</div>
+	</div>
+
+	<p>The areas with the most connections are Downtown Boston and Roxbury. This is a sign that Wicked Free Wi-Fi is working as intended. Roxbury is one of the poorest areas in Boston, while Downtown Boston is a tourist area. It looks like there are couple areas where Wicked Free Wi-Fi could be doing more, however: namely, the Allston Brighton and East Boston areas.</p>
+
+	<script>
+		var width = 500,
+			height = 600;
+
+		const padding = 30;
+
+		d3.json("boston_neighborhoods.json", function(areas) {
+			d3.csv("my_totals.csv", function(data) {
+				console.log(data)
+				console.log(data[0]['total ']/1167198)
+				// console.log(data[0]['area'])
+				svg = d3.select("#left-div").append("svg")
+					.attr("width", width)
+					.attr("height", height)
+					.style("background-color", "#ecf0f1")
+
+				var projection = d3.geoConicEquidistant()
+					.rotate([100, 0, 0])
+					.fitExtent([[padding, padding], [-padding + width, -padding + height]], areas);
+				
+				var path = d3.geoPath()
+							.projection(projection);
+
+				function chooseColor(i) {
+					max = 1167198
+					if (i < 0) {
+						return "rgb(192, 192, 192)"
+					}
+					value = 255 - Math.trunc(data[i]['total '] / max * 255)
+					return "rgb(" + value + ", 255, 255)";
+
+					// input = +input;
+					// if (input > 0) { //red
+					// 	return "rgb(231, 76, 60)";
+					// 	} else { //blue
+					// 		return "rgb(52, 152, 219)";
+					// 	}
+				}
+				// d3.select("info")
+				// 	.append("svg")
+				// 	.attr("width", 100)
+				// 	.attr("height", 200)
+				// 	.style("background-color", "#dddddd")
+
+				// I know, I know, I should have used a CSV or something
+				var json_to_csv = {
+					"Roslindale": 7,
+					"Jamaica Plain": -1,
+					"Mission Hill": -1,
+					"Longwood Medical Area": -1,
+					"Bay Village": 8,
+					"Leather District": 8,
+					"Chinatown": 8,
+					"North End": 8,
+					"Roxbury": 9,
+					"South End": 4,
+					"Back Bay": -1,
+					"East Boston": 2,
+					"Charlestown": 1,
+					"West End": 8,
+					"Beacon Hill": 8,
+					"Downtown": 8,
+					"Fenway": -1,
+					"Brighton": 3,
+					"West Roxbury": -1,
+					"Hyde Park": 5,
+					"Mattapan": -1,
+					"Dorchester": 6,
+					"South Boston Waterfront": 0,
+					"South Boston": 4,
+					"Allston": 3,
+					"Harbor Islands": -1
+				}
+
+				var names_json_to_csv = {
+					"Roslindale": "Roslindale",
+					"Jamaica Plain": "None",
+					"Mission Hill": "None",
+					"Longwood Medical Area": "None",
+					"Bay Village": "Downtown Boston",
+					"Leather District": "Downtown Boston",
+					"Chinatown": "Downtown Boston",
+					"North End": "Downtown Boston",
+					"Roxbury": "Roxbury",
+					"South End": "South Boston",
+					"Back Bay": "None",
+					"East Boston": "East Boston",
+					"Charlestown": "Charlestown",
+					"West End": "Downtown Boston",
+					"Beacon Hill": "Downtown Boston",
+					"Downtown": "Downtown Boston",
+					"Fenway": "None",
+					"Brighton": "Allston Brighton",
+					"West Roxbury": "None",
+					"Hyde Park": "Hyde Park",
+					"Mattapan": "None",
+					"Dorchester": "Dorchester",
+					"South Boston Waterfront": "Columbus Park",
+					"South Boston": "South Boston",
+					"Allston": "Allston Brighton",
+					"Harbor Islands": "None"
+				}
+
+
+
+				svg.selectAll("path")
+					.data(areas.features, function(d) {return d.properties.Name})
+					.enter()
+					.append("path")
+					.attr("d", function(d) {
+						return path(d.geometry);
+					})
+					.style("stroke", "#bbb")
+					.style("fill", function(d, i) {
+						console.log(chooseColor(json_to_csv[d.properties.Name]))
+						return chooseColor(json_to_csv[d.properties.Name]);
+					})
+					.on("mouseover", function(d, i) {
+						console.log(d.properties.Name);
+						d3.selectAll("#my_text")
+							.remove()
+						svg.append("text")
+							.text(function() {
+								num = "no data";
+								i = json_to_csv[d.properties.Name]
+								if (i > 0) {
+									num = data[i]['total '];
+								}
+								return names_json_to_csv[d.properties.Name] + ": " + String(num) + " connections";
+							})
+								// d.properties.Name)
+							.attr("id", "my_text")
+							.attr("x", 10)
+							.attr("y", 45)
+						// d3.select("#info")
+						// 	.append("text")
+						// 		// .text(areas_names)
+						// 		.text(d.properties.Name)
+						// 		.attr("id", "my_text")
+						// 		.attr("x", 50)
+						// 		.attr("y", 50);
+					})
+
+					svg.append("text")
+						.text("Connections to Wicked Free Wi-Fi by Boston Neighborhood")
+						.attr("x", 10)
+						.attr("y", 25)
+						.style("font-weight", "bold")
+
+
+
+
+
+
+				// svg.selectAll("text")
+				// 	.data(areas.features, function(d) {return d.properties.Name})
+				// 	.enter()
+				// 	.append("text")
+				// 	.text(function(d, i){return json_to_csv[d.properties.Name]})
+				// 	// .text(function(d, i) {return data[i]['name']})
+				// 	.attr("x", function(d){return path.centroid(d)[0];})
+				// 	.attr("y", function(d){return path.centroid(d)[1];}) 
+				// 	.style("font-size", "10px")
+
+
+				// function getDataRow(d, i) {
+				// 	console.log(d.properties.area_numbe)
+				// 	return 1;
+				// 	// get area_numbe from d
+				// 	// match it with num from pop.csv (data)
+				// 	// return a number that will work as the index for the call to chooseColor
+				// }
+
+				function not_contains(arr, element) {
+				    for (var i = 0; i < arr.length; i++) {
+				        if (arr[i] === element) {
+				            return false;
+				        }
+				    }
+				    return true;
+				}
+			})
+		})
+
+	</script>
+</body>
+
+</html>
